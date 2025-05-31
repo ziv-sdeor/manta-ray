@@ -1,14 +1,28 @@
-import { Icon, type LatLngLiteral, type LatLngTuple } from "leaflet";
-import "leaflet/dist/leaflet.css";
-import { LayersControl, MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
+import { type LatLngLiteral, type LatLngTuple } from "leaflet";
+import { useEffect, useState } from "react";
+import { LayersControl, MapContainer, TileLayer } from "react-leaflet";
+import Ship, { type ShipPosition } from "./Ship";
+import Site from "./Site";
 
-const position: LatLngTuple = [32.0853, 34.7818]; // Default location
+const position: LatLngTuple = [32.0853, 34.7818]; // Default center position
 
-interface Site extends LatLngLiteral {
-	heading: number;
-}
+export default function MapView() {
+	const [sites, setSites] = useState<LatLngLiteral[]>([]);
+	const [ship, setShip] = useState<ShipPosition>({ lat: 32.0853, lng: 34.7818, heading: 0 });
 
-export default function MapView(props: { sites: Site[]; ship?: LatLngLiteral }) {
+	useEffect(() => {
+		// Simulate fetching sites from an API
+		const fetchSites = async () => {
+			// Replace with actual API call
+			const fetchedSites: LatLngLiteral[] = [
+				{ lat: 32.09, lng: 34.79 },
+				{ lat: 32.1, lng: 34.8 },
+			];
+			setSites(fetchedSites);
+		};
+		fetchSites();
+	}, []);
+
 	return (
 		<MapContainer center={position} zoom={10} style={{ height: "100vh" }}>
 			<LayersControl position="topright">
@@ -20,26 +34,20 @@ export default function MapView(props: { sites: Site[]; ship?: LatLngLiteral }) 
 				</LayersControl.BaseLayer>
 			</LayersControl>
 
-			{props.sites.map(function (site, index) {
+			<Ship position={ship} onUpdate={setShip} />
+			{sites.map(function (site, index) {
 				return (
-					<Marker key={index} position={site}>
-						<Popup>Site</Popup>
-					</Marker>
+					<Site
+						position={site}
+						key={index}
+						onUpdate={position => {
+							const updatedSites = [...sites];
+							updatedSites[index] = position;
+							setSites(updatedSites);
+						}}
+					/>
 				);
 			})}
-			{props.ship && (
-				<Marker
-					position={[props.ship.lat, props.ship.lng]}
-					icon={
-						new Icon({
-							iconUrl: "/ship.png",
-							iconSize: [43, 43],
-						})
-					}
-				>
-					<Popup>Ship</Popup>
-				</Marker>
-			)}
 		</MapContainer>
 	);
 }
